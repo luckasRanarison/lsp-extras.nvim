@@ -19,14 +19,14 @@ local is_enabled = false
 ---@field data? lsp.LSPAny
 ---@field client? vim.lsp.Client
 
----@class LspExtras.CodeActionOptions
+---@class LspExtras.CodeActionHintsOptions
 ---@field update_on_insert? boolean If `true` extmarks will also get updated in insert mode
 ---@field format? fun(actions: LspExtras.CodeAction[]): string The function used for formatting the hint text
 
 ---@param results vim.lsp.CodeActionResultEntry[]
 ---@param line number
 ---@param bufnr number
----@param opts LspExtras.CodeActionOptions
+---@param opts LspExtras.CodeActionHintsOptions
 local function set_extmarks(results, line, bufnr, opts)
   if not vim.api.nvim_buf_is_valid(bufnr) then return end
   if bufnr ~= vim.api.nvim_get_current_buf() then return end
@@ -75,7 +75,7 @@ local function get_line_diagnostics()
   return results
 end
 
----@param opts LspExtras.CodeActionOptions
+---@param opts LspExtras.CodeActionHintsOptions
 local function code_action_request(opts)
   vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1)
 
@@ -95,12 +95,14 @@ local function code_action_request(opts)
   )
 end
 
+M.is_enabled = function() return is_enabled end
+
 ---Enables code action hints for all buffers.
 ---
 ---Hints are displayed as extmarks appended to the end of the line.
 ---Extmarks are updated on `CursorMoved` and `TextChanged` by default.
----@param opts? LspExtras.CodeActionOptions
-M.enable_hints = function(opts)
+---@param opts? LspExtras.CodeActionHintsOptions
+M.enable = function(opts)
   if is_enabled then return logger.warn("Code action hints are already enabled") end
 
   local update_events = { "CursorMoved", "TextChanged" }
@@ -128,7 +130,7 @@ M.enable_hints = function(opts)
 end
 
 ---Disables code action hints for all buffers.
-M.disable_hints = function()
+M.disable = function()
   vim.api.nvim_clear_autocmds({ group = augroup })
   vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1)
 
