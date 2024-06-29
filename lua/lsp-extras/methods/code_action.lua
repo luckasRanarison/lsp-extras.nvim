@@ -3,8 +3,8 @@ local M = {}
 local logger = require("lsp-extras.utils.logger")
 
 local methods = vim.lsp.protocol.Methods
-local augroup = vim.api.nvim_create_augroup("vim_lsp_codeactions", {})
-local namespace = vim.api.nvim_create_namespace("vim_lsp_codeactions")
+local augroup = vim.api.nvim_create_augroup("vim_lsp_codeaction", {})
+local namespace = vim.api.nvim_create_namespace("vim_lsp_codeaction")
 
 local is_enabled = false
 
@@ -97,7 +97,7 @@ end
 
 M.is_enabled = function() return is_enabled end
 
----Enables code action hints for all buffers.
+---Enables code action hints for the current line in all buffers.
 ---
 ---Hints are displayed as extmarks appended to the end of the line.
 ---Extmarks are updated on `CursorMoved` and `TextChanged` by default.
@@ -129,7 +129,7 @@ M.enable = function(opts)
   code_action_request(local_opts)
 end
 
----Disables code action hints for all buffers.
+---Disables code action hints in all buffers.
 M.disable = function()
   vim.api.nvim_clear_autocmds({ group = augroup })
   vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1)

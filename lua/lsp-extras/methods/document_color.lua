@@ -113,7 +113,7 @@ end
 
 M.is_enabled = function() return is_enabled end
 
----Enables color hints for all buffers.
+---Enables color hints in all buffers.
 ---
 ---Extmarks are updated on `BufEnter`, `TextChanged` and `TextChangedI`.
 ---@param opts LspExtras.ColorOptions
@@ -133,7 +133,7 @@ M.enable = function(opts)
   request_clients(opts)
 end
 
----Disables color hints for all buffers.
+---Disables color hints in all buffers.
 M.disable = function()
   for _, bufnr in pairs(enabled_buffers) do
     if vim.api.nvim_buf_is_valid(bufnr) then
