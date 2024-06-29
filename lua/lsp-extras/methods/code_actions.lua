@@ -1,5 +1,7 @@
 local M = {}
 
+local logger = require("lsp-extras.utils.logger")
+
 local methods = vim.lsp.protocol.Methods
 local augroup = vim.api.nvim_create_augroup("vim_lsp_codeactions", {})
 local namespace = vim.api.nvim_create_namespace("vim_lsp_codeactions")
@@ -16,6 +18,10 @@ local is_enabled = false
 ---@field command? lsp.Command
 ---@field data? lsp.LSPAny
 ---@field client? vim.lsp.Client
+
+---@class LspExtras.CodeActionOptions
+---@field update_on_insert? boolean If `true` extmarks will also get updated in insert mode
+---@field format? fun(actions: LspExtras.CodeAction[]): string The function used for formatting the hint text
 
 ---@param results vim.lsp.CodeActionResultEntry[]
 ---@param line number
@@ -40,7 +46,7 @@ local function set_extmarks(results, line, bufnr, opts)
 
   vim.api.nvim_buf_set_extmark(bufnr, namespace, line, 0, {
     hl_mode = "combine",
-    virt_text = { { opts.format and opts.format(actions) or actions[1].title, "Comment" } },
+    virt_text = { { opts.format and opts.format(actions) or actions[1].title, "LspInlayHint" } },
     virt_text_pos = "eol",
     priority = 200,
   })
@@ -89,42 +95,43 @@ local function code_action_request(opts)
   )
 end
 
----@class LspExtras.CodeActionOptions
----@field update_on_insert? boolean If `true` extmarks will also get updated in insert mode
----@field format? fun(actions: LspExtras.CodeAction[]): string The function used for formatting the hint text
-
 ---Enables code action hints for all buffers.
 ---
----Hints are displayed as extmarks appended at the end of the line.
+---Hints are displayed as extmarks appended to the end of the line.
 ---Extmarks are updated on `CursorMoved` and `TextChanged` by default.
 ---@param opts? LspExtras.CodeActionOptions
 M.enable_hints = function(opts)
-  if is_enabled then return end
+  if is_enabled then return logger.warn("Code action hints are already enabled") end
 
-  local events = { "CursorMoved", "TextChanged" }
+  local update_events = { "CursorMoved", "TextChanged" }
+  local clear_events = { "BufLeave" }
   local local_opts = opts or {}
 
   if local_opts.update_on_insert then
-    vim.list_extend(events, { "CursorMovedI", "TextChangedI" })
+    vim.list_extend(update_events, { "CursorMovedI", "TextChangedI" })
   else
-    vim.api.nvim_create_autocmd("InsertEnter", {
-      group = augroup,
-      callback = function() vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1) end,
-    })
+    vim.list_extend(clear_events, { "InsertEnter" })
   end
 
-  vim.api.nvim_create_autocmd(events, {
+  vim.api.nvim_create_autocmd(clear_events, {
+    group = augroup,
+    callback = function() vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1) end,
+  })
+  vim.api.nvim_create_autocmd(update_events, {
     group = augroup,
     callback = function() code_action_request(local_opts) end,
   })
 
-  code_action_request(local_opts)
   is_enabled = true
+
+  code_action_request(local_opts)
 end
 
+---Disables code action hints for all buffers.
 M.disable_hints = function()
   vim.api.nvim_clear_autocmds({ group = augroup })
   vim.api.nvim_buf_clear_namespace(0, namespace, 0, -1)
+
   is_enabled = false
 end
 

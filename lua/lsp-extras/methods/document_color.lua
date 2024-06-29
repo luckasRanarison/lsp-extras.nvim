@@ -9,27 +9,23 @@ local namespace = vim.api.nvim_create_namespace("vim_lsp_documentcolor")
 
 ---@type uv_timer_t | nil
 local request_timer = nil
-local default_debounce = 200
 local enabled_buffers = {}
 local is_enabled = false
 
 ---@alias LspExtras.ColorStyle "inline" | "background" | "foreground"
 
 ---@class LspExtras.ColorOptions
----@field style LspExtras.ColorStyle
----@field symbol? string
----@field debounce? number
-
----Convertion from 0-1 range to 0-255
----@param lsp_color number
-local function normalize_color(lsp_color) return math.floor(lsp_color * 255) end
+---@field style LspExtras.ColorStyle The color hints style
+---@field symbol? string The symbol to display if the style is `inline`
+---@field request_delay? number Request delay in milliseconds, the default value is 200ms
 
 ---@param color lsp.Color
 ---@param style LspExtras.ColorStyle
 local function create_highlight(color, style)
-  local red = normalize_color(color.red)
-  local green = normalize_color(color.green)
-  local blue = normalize_color(color.blue)
+  -- Convertion from 0-1 range to 0-255
+  local red = math.floor(color.red * 255)
+  local green = math.floor(color.green * 255)
+  local blue = math.floor(color.blue * 255)
   local hex_color = string.format("%02x%02x%02x", red, green, blue)
   local suffix = style == "background" and "Bg" or "Fg"
   local group = "LspExtras" .. suffix .. hex_color
@@ -92,7 +88,7 @@ local function color_request(client, opts)
       vim.api.nvim_buf_clear_namespace(bufnr, namespace, 0, -1)
 
       for _, value in pairs(result) do
-        pcall(function() set_extmark(bufnr, value, opts) end) -- Dismiss extmarks errors
+        set_extmark(bufnr, value, opts)
       end
     end,
     bufnr
@@ -112,15 +108,18 @@ local function request_clients(opts)
     for _, client in pairs(clients) do
       color_request(client, opts)
     end
-  end, opts.debounce or default_debounce)
+  end, opts.request_delay or 200)
 end
 
 M.is_enabled = function() return is_enabled end
 
 ---Enables color hints for all buffers.
+---
 ---Extmarks are updated on `BufEnter`, `TextChanged` and `TextChangedI`.
 ---@param opts LspExtras.ColorOptions
 M.enable = function(opts)
+  if is_enabled then return logger.warn("Color hints are already enabled") end
+
   vim.validate({ opts = { opts, "table" } })
   vim.validate({ style = { opts.style, "string" } })
 
@@ -129,8 +128,9 @@ M.enable = function(opts)
     callback = function() request_clients(opts) end,
   })
 
-  request_clients(opts)
   is_enabled = true
+
+  request_clients(opts)
 end
 
 ---Disables color hints for all buffers.
@@ -142,6 +142,7 @@ M.disable = function()
   end
 
   vim.api.nvim_clear_autocmds({ group = augroup })
+
   is_enabled = false
 end
 
