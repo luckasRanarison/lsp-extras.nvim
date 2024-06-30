@@ -66,9 +66,10 @@ local code_action = require("lsp-extras").code_action
 ---@class LspExtras.CodeActionHintsOptions
 ---@field update_on_insert? boolean If `true` extmarks will also get updated in insert mode
 ---@field format? fun(actions: LspExtras.CodeAction[]): string The function used for formatting the hint text
+---@field request_delay? number Request delay in milliseconds, the default value is 200ms
 
-code_action.disable() -- Disables code action hints
 code_action.enable() -- Enables code action hints for the current line in all buffers
+code_action.disable() -- Disables code action hints
 code_action.is_enabled() -- Can be used for toggling
 ```
 

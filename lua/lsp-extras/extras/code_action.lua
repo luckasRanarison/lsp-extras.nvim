@@ -1,27 +1,22 @@
 local M = {}
 
+local utils = require("lsp-extras.utils")
 local logger = require("lsp-extras.utils.logger")
 
 local methods = vim.lsp.protocol.Methods
 local augroup = vim.api.nvim_create_augroup("vim_lsp_codeaction", {})
 local namespace = vim.api.nvim_create_namespace("vim_lsp_codeaction")
 
+---@type LspExtras.TimerObject
+local request_timer = { value = nil }
 local is_enabled = false
 
----@class LspExtras.CodeAction
----@field title string
----@field kind? lsp.CodeActionKind
----@field diagnostics? lsp.Diagnostic[]
----@field isPreferred? boolean
----@field disabled? lsp._anonym4.disabled
----@field edit? lsp.WorkspaceEdit
----@field command? lsp.Command
----@field data? lsp.LSPAny
----@field client? vim.lsp.Client
+---@alias LspExtras.CodeAction (lsp.CodeAction | lsp.Command)
 
 ---@class LspExtras.CodeActionHintsOptions
 ---@field update_on_insert? boolean If `true` extmarks will also get updated in insert mode
 ---@field format? fun(actions: LspExtras.CodeAction[]): string The function used for formatting the hint text
+---@field request_delay? number Request delay in milliseconds, the default value is 200ms
 
 ---@param results vim.lsp.CodeActionResultEntry[]
 ---@param line number
@@ -32,13 +27,11 @@ local function set_extmarks(results, line, bufnr, opts)
   if bufnr ~= vim.api.nvim_get_current_buf() then return end
   if line ~= vim.api.nvim_win_get_cursor(0)[1] - 1 then return end
 
-  ---@type LspExtras.CodeAction[]
   local actions = {}
 
-  for client_id, value in pairs(results) do
-    local client = vim.lsp.get_client_by_id(client_id)
+  for _, value in pairs(results) do
     for _, action in pairs(value.result or {}) do
-      actions[#actions + 1] = vim.tbl_extend("error", action, { client = client })
+      actions[#actions + 1] = action
     end
   end
 
@@ -87,12 +80,14 @@ local function code_action_request(opts)
     diagnostics = get_line_diagnostics(),
   }
 
-  vim.lsp.buf_request_all(
-    bufnr,
-    methods.textDocument_codeAction,
-    params,
-    function(results) set_extmarks(results, params.range.start.line, bufnr, opts) end
-  )
+  utils.debounced_fn(request_timer, function()
+    vim.lsp.buf_request_all(
+      bufnr,
+      methods.textDocument_codeAction,
+      params,
+      function(results) set_extmarks(results, params.range.start.line, bufnr, opts) end
+    )
+  end, opts.request_delay)
 end
 
 M.is_enabled = function() return is_enabled end
