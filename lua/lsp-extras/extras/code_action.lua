@@ -107,9 +107,10 @@ M.enable = function(opts)
 
   local update_events = { "CursorMoved", "TextChanged" }
   local clear_events = { "BufLeave" }
-  local local_opts = opts or {}
 
-  if local_opts.update_on_insert then
+  opts = opts or {}
+
+  if opts.update_on_insert then
     vim.list_extend(update_events, { "CursorMovedI", "TextChangedI" })
   else
     vim.list_extend(clear_events, { "InsertEnter" })
@@ -121,12 +122,12 @@ M.enable = function(opts)
   })
   vim.api.nvim_create_autocmd(update_events, {
     group = augroup,
-    callback = function() code_action_request(local_opts) end,
+    callback = function() code_action_request(opts) end,
   })
 
   is_enabled = true
 
-  code_action_request(local_opts)
+  code_action_request(opts)
 end
 
 ---Disables code action hints in all buffers.
