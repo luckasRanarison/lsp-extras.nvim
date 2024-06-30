@@ -12,6 +12,7 @@ All the functions are strongly typed and documented, so most of them should be s
 ## Modules
 
 - [lsp_extras.document_color](#lsp_extrasdocument_color-textdocumentdocumentcolor)
+- [lsp_extras.on_type_formatting](#lsp_extrason_type_formatting-textdocumentontypeformatting)
 - [lsp_extras.code_action](#lsp_extrascode_action-textdocumentcodeaction)
 
 ### lsp_extras.document_color ([textDocument/documentColor](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentColor))
@@ -33,6 +34,27 @@ color.is_enabled() -- Can be used for toggling
 
 > [!NOTE]
 > Extmarks are updated on `BufEnter`, `TextChanged` and `TextChangedI`
+
+### lsp_extras.onTypeFormatting ([textDocument/onTypeFormatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_onTypeFormatting))
+
+Provides the ability to format the buffer when trigger characters are typed.
+
+```lua
+local type_formatting = require("lsp_extras").on_type_formatting
+
+---@class LspExtras.OnTypeFormattingOptions
+---@field enabled_servers? string[] Only send requests to the specified servers
+---@field trim_final_newline? boolean Trim trailing whitespace on a line
+---@field trim_trailing_whitespace? boolean Insert a newline character at the end of the file if one does not exist
+---@field insert_final_newline? boolean Trim all newlines after the final newline at the end of the file
+
+type_formatting.enable({ enabled_servers = { "lua_ls" } }) -- Enabes on type formatting in all buffers attached to capable servers
+type_formatting.disable() -- Disables on type formatting
+type_formatting.is_enabled() -- Can be used for toggling
+```
+
+> [!NOTE]
+> The implementation uses `vim.on_key` to listen to key presses
 
 ### lsp_extras.code_action ([textDocument/codeAction](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction))
 
@@ -68,7 +90,6 @@ end
 ## TODOs
 
 - [workspace/willRenameFiles](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_willRenameFiles)
-- [textDocument/onTypeFormatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_onTypeFormatting)
 - [textDocument/documentLink](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentLink)
 
 ## Contributing
