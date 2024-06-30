@@ -41,9 +41,10 @@ local function format_request(client, key, bufnr, opts)
     ---@param error lsp.ResponseError
     ---@param result lsp.TextEdit[]
     function(error, result)
-      if not vim.api.nvim_buf_is_valid(bufnr) then return end
       if error then return logger.error(error.message) end
-      if result then vim.lsp.util.apply_text_edits(result, bufnr, client.offset_encoding) end
+      if not result or not vim.api.nvim_buf_is_valid(bufnr) then return end
+
+      vim.lsp.util.apply_text_edits(result, bufnr, client.offset_encoding)
     end,
     bufnr
   )
