@@ -7,8 +7,8 @@ local methods = vim.lsp.protocol.Methods
 local augroup = vim.api.nvim_create_augroup("vim_lsp_documentcolor", {})
 local namespace = vim.api.nvim_create_namespace("vim_lsp_documentcolor")
 
----@type uv_timer_t | nil
-local request_timer = nil
+---@type LspExtras.TimerObject
+local request_timer = { value = nil }
 local enabled_buffers = {}
 local is_enabled = false
 
@@ -97,18 +97,13 @@ end
 
 ---@param opts LspExtras.ColorOptions
 local function request_clients(opts)
-  if request_timer and not request_timer:is_closing() then
-    request_timer:stop()
-    request_timer:close()
-  end
-
-  request_timer = vim.defer_fn(function()
+  utils.debounced_fn(request_timer, function()
     local clients = utils.get_clients({ method = methods.textDocument_documentColor })
 
     for _, client in pairs(clients) do
       color_request(client, opts)
     end
-  end, opts.request_delay or 200)
+  end, opts.request_delay)
 end
 
 M.is_enabled = function() return is_enabled end
