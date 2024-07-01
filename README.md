@@ -35,7 +35,7 @@ color.is_enabled() -- Can be used for toggling
 > [!NOTE]
 > Extmarks are updated on `BufEnter`, `TextChanged` and `TextChangedI`
 
-### lsp_extras.onTypeFormatting ([textDocument/onTypeFormatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_onTypeFormatting))
+### lsp_extras.on_type_formatting ([textDocument/onTypeFormatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_onTypeFormatting))
 
 Provides the ability to format the buffer when trigger characters are typed.
 
@@ -90,8 +90,9 @@ end
 
 ## TODOs
 
-- [workspace/willRenameFiles](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_willRenameFiles)
+- [textDocument/selectionRange](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_selectionRange)
 - [textDocument/documentLink](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentLink)
+- [textDocument/foldingRange](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_foldingRange)
 
 ## Contributing
 
